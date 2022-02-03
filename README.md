@@ -4,7 +4,13 @@ An esp32 based controller for the RCTF Snowcat
 
 Project based on : https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template
 
+To connect a controller, just put it in sync mode and it should connect immediately.
 
+The controls are "twinstick" controls, so the left side of the controller controls the left track, and the right side, the right track. 
+- L2/R2 go forward (Analog controllers have variable speed)
+- L1/R1 go backward
+- Left Stick/Right stick both control one side
+  - Only up/down movement is registered. left/right does nothing
 
 
 # Building the firmware

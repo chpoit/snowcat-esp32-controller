@@ -23,6 +23,7 @@ limitations under the License.
 
 #include <Arduino.h>
 #include <Bluepad32.h>
+#include <ESP32Servo.h>
 
 #define DEADZONE 20
 

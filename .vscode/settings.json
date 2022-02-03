@@ -6,5 +6,6 @@
         "sstream": "cpp",
         "regex": "cpp",
         "cmath": "cpp"
-    }
+    },
+    "idf.adapterTargetName": "esp32"
 }
