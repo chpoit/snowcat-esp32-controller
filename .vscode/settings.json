@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "*.html": "html",
+        "*.txt": "txt",
+        "btstack_run_loop.h": "c",
+        "sstream": "cpp",
+        "regex": "cpp",
+        "cmath": "cpp"
+    }
+}
