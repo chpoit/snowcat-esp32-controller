@@ -74,12 +74,10 @@ void setup() {
 
     pinMode(LEFTESC_WHITE_PIN, OUTPUT);
     pinMode(RIGHTESC_WHITE_PIN, OUTPUT);
+    delay(250);
 }
 
-// TODO: Add Axis scaling for unbalanced sticks
-// Axis -511 to 512
-// esc 1100 to 1900
-
+// TODO: Figure out why sometimes it crashes for no reason
 void handleThrottle(GamepadPtr gp) {
     int leftSpeed = gp->axisY();
     int rightSpeed = gp->axisRY();
@@ -152,5 +150,4 @@ void loop() {
         }
     }
     delay(msDelay);
-    // vTaskDelay(msDelay);
 }
