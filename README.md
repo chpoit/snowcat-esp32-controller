@@ -8,11 +8,35 @@ Project based on : https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-t
 
 
 # How to use
+1. Follow the instructions in the [Compile](#building-the-firmware) section.
+2. Have everything connected together in a similar fashion to the [Circuit Board](#circuit-board) section.
+3. Check section [Controls](#control-types) to know "how" to drive it
+4. Power everything on
+5. ???
+6. Snow
+
+Anything in the build guide still goes (appart from the BEC and the radio stuff), so make sure you follow everything in there.
+
 To connect a controller, just put it in sync mode and it should connect immediately. Some controllers remember the ESP and can reconnect without being put back in sync mode.
 
+## Configuration
+You probably don't have to change anything, but here are the four "easy" to tweak values
+- `LINEAR_ACCELERATION`: Changes how fast the motors accelerate
+- `DEADZONE`: Changes the stick's deadzone
+- `LEFTESC_WHITE_PIN`: The pin in which the white cable is plugged in. Change this if you plugged it in somewhere else, or if you find recompiling the firmware simpler than swapping the two ESC cables.
+- `RIGHTESC_WHITE_PIN`: The pin in which the other white cable is plugged in. Change this if you plugged it in somewhere else, or if you find recompiling the firmware simpler than swapping the two ESC cables
 
 ## Control Types
 Common controls:
+- Acceleration
+  - The current linear acceleration takes a few seconds to ramp up to max or slow down
+  - I'm not sure of what safe increments we can use so I'm looking for input on that
+- Deadzones
+  - A default deadzone of around 10% of the stick's travel is in place
+  - It can be lowered, but it's in place because one of my controllers is awful and kept jerking the motors back and forth.
+  - Change the `DEADZONE` value in `arduino_main.cpp`
+- ESC Ranges
+  - In my case, my escs do nothing between ~1464PWM and 1500 PWM. the middle point is still set to 1500, but you might see some jerk forward once you stop going backwards, and the backwards controls might be "slow" to respond if you are in a similar situation
 - Calibration
   - Pressing A and B (or Circle and Cross) as the same times enables "calibration" mode 
     - The controller blinks to let you know
@@ -43,14 +67,14 @@ Here is a rough, poorly made, sketch of the circuit.
 ![Kicad](misc/circuit-screenshot.png)
 
 Here's a couple things to note. 
-- Since electricity is magic and mixing voltages is weird, I would avoid plugging the ESC's grounds in the same "ground" as the 5V ground
+- Since electricity is magic and mixing voltages is weird, I would avoid plugging the ESC's grounds in the "same" ground as the 5V ground
   - I use the ground besides the 3.3v pin to ground both of the ESC's black wires
   - It should be fine, but eh, if you insist on doing it, use a diode coming out of the esc's ground.
 - You can power the ESP board using a DC-DC 3.3v converter, you just have to feed it into the 3.3V pin.
   - As long as you have a converted that's rated for your battery. A lot go up to 30v so if should be fine with anything between 2s and 6s. 
   - If you somehow are running a 2s battery, you should probably opt for a 3.3v converter as some of the 5v converters fail to output under 7volts. A 5V would thus theoretically only work for about half if the "safe" voltage of your 2s battery. It might also just start outputting a lower voltage and your ESP32 may or may not decide that it's fine. I would try to avoid it however.
 - I have an inline switch between the positive of the battery and the DC-DC. If you want a switch, make sure to do that, otherwise turning it off wont shut the ESP down because there are grounds everywhere.
-- I use pin 2 and 4 (IO2 and IO4) as the PWM generators for the ESCs because they were easy to set up in a way I wouldn't have to use more magnet wire.
+- I use pin 2 and 4 (IO2 and IO4) as the PWM generators for the ESCs because they were easy to set up in a way I wouldn't have to use more magnet wire. A perk that comes from using PIN2 is that the blue LED of the ESP32 turns on once the controller is connected and it saves me the 2 lines of code to do it ;P
 - You might notice that pin d23 is awfully close to the + blob of the battery, they don't make contact, but I made sure to trim everything down and add Kapton tape
   - This could have been avoided had I opted to use "hotswap" connectors for all the 16pins, I just didn't feel like it.
 - Make sure you test everything to make sure there are no shorts

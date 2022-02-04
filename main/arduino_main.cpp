@@ -13,6 +13,7 @@
 #include "esc/ESC.h"
 #include "utils.h"
 
+#define LINEAR_ACCELERATION 1
 #define DEADZONE 50
 #define LEFTESC_WHITE_PIN 2
 #define RIGHTESC_WHITE_PIN 4
@@ -28,7 +29,7 @@ ESC RIGHT_ESC = ESC(RIGHTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTE
 
 static GamepadPtr myGamepad;
 static ControlScheme* controlScheme;
-static Accel* acceleration = new Linear();
+static Accel* acceleration = new Linear(LINEAR_ACCELERATION);
 StickData calibrationData = StickData();
 
 int prevLeft = ESC_CENTER_POINT;
