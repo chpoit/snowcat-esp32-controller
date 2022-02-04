@@ -14,8 +14,8 @@
 #include "utils.h"
 
 #define DEADZONE 50
-#define LEFTESC_WHITE_PIN 4
-#define RIGHTESC_WHITE_PIN 14
+#define LEFTESC_WHITE_PIN 2
+#define RIGHTESC_WHITE_PIN 4
 
 #define ESC_CENTER_POINT 1500
 #define ESC_LOW_POINT 1100
