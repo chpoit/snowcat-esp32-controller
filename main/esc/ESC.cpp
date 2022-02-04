@@ -1,4 +1,5 @@
 #include "ESC.h"
+#include "scaler.h"
 
 ESC::ESC(int pin, int min, int max, int centerPoint) {
     this->pin = pin;
@@ -6,6 +7,7 @@ ESC::ESC(int pin, int min, int max, int centerPoint) {
     this->max = max;
     this->centerPoint = centerPoint;
     this->servo = Servo();
+    this->scaler = new Scaler(min, centerPoint, max);
 }
 
 void ESC::arm(void) {
@@ -26,4 +28,9 @@ void ESC::spin(int pwm) {
         pwm = this->min;
     }
     this->servo.writeMicroseconds(pwm);
+}
+
+Scaler* ESC::getScaler(void) {
+    return this->scaler;
+    // return 0;
 }

@@ -5,11 +5,16 @@ set(requires "bluepad32")
 # See: https://gitlab.com/ricardoquesada/bluepad32/-/issues/9
 if(DEFINED ENV{BLUEPAD32_ARDUINO})
     list(APPEND srcs "arduino_main.cpp")
+    list(APPEND srcs "utils.cpp")
+    list(APPEND srcs "accel/accel.cpp")
+    list(APPEND srcs "accel/linear.cpp")
     list(APPEND srcs "esc/ESC.cpp")
-    list(APPEND srcs "esc/ESC.h")
+    list(APPEND srcs "esc/scaler.cpp")
+    list(APPEND srcs "controls/controlscheme.cpp")
+    list(APPEND srcs "controls/twinstick.cpp")
     list(APPEND requires "bluepad32_arduino" "arduino")
 endif()
 
-idf_component_register(SRCS "utils.cpp" "${srcs}"
+idf_component_register(SRCS "${srcs}"
                     INCLUDE_DIRS "."
                     REQUIRES "${requires}" "ESP32Servo")

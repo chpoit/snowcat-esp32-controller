@@ -5,7 +5,13 @@
         "btstack_run_loop.h": "c",
         "sstream": "cpp",
         "regex": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "chrono": "cpp",
+        "random": "cpp",
+        "limits": "cpp",
+        "semaphore": "cpp",
+        "functional": "cpp",
+        "source_location": "cpp"
     },
     "idf.adapterTargetName": "esp32"
 }

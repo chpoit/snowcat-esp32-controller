@@ -23,8 +23,12 @@ limitations under the License.
 
 #include <Arduino.h>
 #include <Bluepad32.h>
+#include "accel/accel.h"
+#include "accel/linear.h"
+#include "controls/controlscheme.h"
+#include "controls/twinstick.h"
 #include "esc/ESC.h"
-#include "utils.cpp"
+#include "utils.h"
 
 #define DEADZONE 50
 #define LEFTESC_WHITE_PIN 4
@@ -38,7 +42,11 @@ limitations under the License.
 
 ESC LEFT_ESC = ESC(LEFTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT);
 ESC RIGHT_ESC = ESC(RIGHTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT);
+
 static GamepadPtr myGamepad;
+static ControlScheme* controlScheme;
+static Accel* acceleration = new Linear();
+
 int prevLeft = ESC_CENTER_POINT;
 int prevRight = ESC_CENTER_POINT;
 int maxXY = 511;
@@ -58,35 +66,21 @@ void onDisconnectedGamepad(GamepadPtr gp) {
     vTaskDelete(*controllerTask);
 }
 
-// Arduino setup function. Runs in CPU 1
-
-// TODO: Figure out why sometimes it crashes for no reason
 void handleThrottle(void* params) {
     for (;;) {
         if (isCalibrating) {
             continue;
         }
-        if (myGamepad && myGamepad->isConnected()) {
-            auto gp = ((GamepadPtr)params);
-            int leftSpeed = gp->axisY();
-            int rightSpeed = gp->axisRY();
+        if (myGamepad && controlScheme && myGamepad->isConnected()) {
+            auto axis = controlScheme->handleThrottle();
+            int leftSpeed = axis.first;
+            int rightSpeed = axis.second;
 
-            int leftThrottle = gp->brake();
-            int rightThrottle = gp->throttle();
+            double leftPWM = LEFT_ESC.getScaler()->scaleAxis(leftSpeed);
+            double rightPWM = RIGHT_ESC.getScaler()->scaleAxis(rightSpeed);
 
-            bool l1 = gp->l1();
-            bool l2 = gp->l2();
-            bool r1 = gp->r1();
-            bool r2 = gp->r2();
-
-            leftSpeed = getSpeed(leftSpeed, l2, l1, leftThrottle, gp->getModel(), DEADZONE, minXY, maxXY);
-            rightSpeed = getSpeed(rightSpeed, r2, r1, rightThrottle, gp->getModel(), DEADZONE, minRXY, maxRXY);
-
-            double leftPWM = scaleToESC(leftSpeed, ESC_LOW_POINT, ESC_CENTER_POINT, ESC_HIGH_POINT);
-            double rightPWM = scaleToESC(rightSpeed, ESC_LOW_POINT, ESC_CENTER_POINT, ESC_HIGH_POINT);
-
-            double leftLinearPWM = makeNice(leftPWM, prevLeft);
-            double rightLinearPWM = makeNice(rightPWM, prevRight);
+            double leftLinearPWM = acceleration->accelerate(leftPWM, prevLeft);
+            double rightLinearPWM = acceleration->accelerate(rightPWM, prevRight);
 
             Serial.println("ESCL\t" + String(leftLinearPWM) + "(" + leftPWM + ")" + "\tESCR\t" +
                            String(rightLinearPWM) + "(" + rightPWM + ")");
@@ -97,7 +91,7 @@ void handleThrottle(void* params) {
             prevLeft = leftLinearPWM;
             prevRight = rightLinearPWM;
         }
-        delay(2);
+        delay(1);
     }
 }
 
@@ -109,7 +103,7 @@ void createControllerTask(GamepadPtr gp) {
     xTaskCreatePinnedToCore(handleThrottle, /* Function to implement the task */
                             "throttle",     /* Name of the task */
                             10000,          /* Stack size in words */
-                            (void*)gp,      /* Task input parameter */
+                            NULL,           /* Task input parameter */
                             0,              /* Priority of the task */
                             controllerTask, /* Task handle. */
                             0);
@@ -122,6 +116,7 @@ void onConnectedGamepad(GamepadPtr gp) {
     createControllerTask(gp);
 
     myGamepad = gp;
+    controlScheme = new TwinStick(myGamepad, DEADZONE);
     Serial.println("CALLBACK: Gamepad is connected!");
     LEFT_ESC.arm();
     RIGHT_ESC.arm();
@@ -163,14 +158,14 @@ void loop() {
         if (!isCalibrating) {
             // handleThrottle(myGamepad);
             if (myGamepad->a() && myGamepad->b()) {
-                blinkController(myGamepad);
+                utils::blinkController(myGamepad);
                 isCalibrating = true;
                 maxXY = maxRXY = minXY = minRXY = 0;
             }
         } else {
             calibrateSticks(myGamepad);
             if (myGamepad->x() && myGamepad->y()) {
-                blinkController(myGamepad);
+                utils::blinkController(myGamepad);
                 isCalibrating = false;
                 Serial.println("newVals: ");
                 Serial.println("maxXY: " + String(maxXY));
