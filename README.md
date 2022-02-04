@@ -1,6 +1,6 @@
 # snowcat-esp32-controller
 
-**Make sure you realize I have no idea what I'm talking about when it comes to electronics, I just do things and they end up working. I see no reason why anything here should be wrong**
+**Make sure you realize I have no idea what I'm talking about when it comes to electronics, I just do things and they end up working. I see no reason why anything here should be wrong however.**
 
 An esp32 based controller for the RCTF Snowcat
 
