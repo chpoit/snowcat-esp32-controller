@@ -24,6 +24,7 @@ limitations under the License.
 #include <Arduino.h>
 #include <Bluepad32.h>
 #include "esc/ESC.h"
+#include "utils.cpp"
 
 #define DEADZONE 50
 #define LEFTESC_WHITE_PIN 4
@@ -35,25 +36,29 @@ limitations under the License.
 // #define ESC_LOW_POINT (ESC_CENTER_POINT - 100)
 // #define ESC_HIGH_POINT (ESC_CENTER_POINT + 100)
 
-ESC LEFT_ESC = ESC(LEFTESC_WHITE_PIN);
-ESC RIGHT_ESC = ESC(RIGHTESC_WHITE_PIN);
-
-// This callback gets called any time a new gamepad is connected.
-// Up to 4 gamepads can be connected at the same time.
-
+ESC LEFT_ESC = ESC(LEFTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT);
+ESC RIGHT_ESC = ESC(RIGHTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT);
 static GamepadPtr myGamepad;
-
 int prevLeft = ESC_CENTER_POINT;
 int prevRight = ESC_CENTER_POINT;
+int maxXY = 511;
+int maxRXY = 511;
+int minXY = -512;
+int minRXY = -512;
+bool isCalibrating = false;
 
 void onConnectedGamepad(GamepadPtr gp) {
     myGamepad = gp;
     Serial.println("CALLBACK: Gamepad is connected!");
+    LEFT_ESC.arm();
+    RIGHT_ESC.arm();
 }
 
 void onDisconnectedGamepad(GamepadPtr gp) {
     Serial.println("CALLBACK: Gamepad is disconnected!");
     myGamepad = nullptr;
+    LEFT_ESC.disarm();
+    RIGHT_ESC.disarm();
 }
 
 // Arduino setup function. Runs in CPU 1
@@ -69,60 +74,11 @@ void setup() {
 
     pinMode(LEFTESC_WHITE_PIN, OUTPUT);
     pinMode(RIGHTESC_WHITE_PIN, OUTPUT);
-
-    LEFT_ESC.arm();
-    RIGHT_ESC.arm();
 }
 
 // TODO: Add Axis scaling for unbalanced sticks
 // Axis -511 to 512
 // esc 1100 to 1900
-double scaleToESC(int axisValue) {
-    double lowRange = (ESC_CENTER_POINT - ESC_LOW_POINT);
-    double highRange = (ESC_HIGH_POINT - ESC_CENTER_POINT);
-    if (axisValue < 0) {
-        auto scalar = axisValue / -511.;
-        return ESC_CENTER_POINT - (scalar * lowRange);
-    }
-    if (axisValue > 0) {
-        auto scalar = axisValue / 512.;
-        return ESC_CENTER_POINT + (scalar * highRange);
-    }
-
-    return double(ESC_CENTER_POINT);
-}
-
-int getSpeed(int axis, bool forward, bool backward, int throttleValue, int model) {
-    if (forward && backward) {
-        return 0;
-    }
-    if (forward) {
-        // Throttle reports as 0 for controllers without analog
-        if (model == Gamepad::CONTROLLER_TYPE_WiiController || model == Gamepad::CONTROLLER_TYPE_SwitchProController ||
-            model == Gamepad::CONTROLLER_TYPE_SwitchJoyConLeft || model == Gamepad::CONTROLLER_TYPE_SwitchJoyConRight ||
-            model == Gamepad::CONTROLLER_TYPE_SwitchJoyConPair) {
-            return 512;
-        }
-        return min(int(ceil(throttleValue / 2)), 512);
-    }
-    if (backward) {
-        return -511;
-    }
-    // Use this to account for
-    if (abs(axis) < DEADZONE) {
-        return 0;
-    }
-    // I just want forward to be positive and backwards to be negative, so I invert the values here
-    return -axis;
-}
-
-double makeNice(double target, double current) {
-    double leftToGo = abs(target - current);
-
-    double newChange = min(1., leftToGo);
-
-    return (target > current ? current + newChange : current - newChange);
-}
 
 void handleThrottle(GamepadPtr gp) {
     int leftSpeed = gp->axisY();
@@ -136,19 +92,14 @@ void handleThrottle(GamepadPtr gp) {
     bool r1 = gp->r1();
     bool r2 = gp->r2();
 
-    leftSpeed = getSpeed(leftSpeed, l2, l1, leftThrottle, gp->getModel());
-    rightSpeed = getSpeed(rightSpeed, r2, r1, rightThrottle, gp->getModel());
+    leftSpeed = getSpeed(leftSpeed, l2, l1, leftThrottle, gp->getModel(), DEADZONE, minXY, maxXY);
+    rightSpeed = getSpeed(rightSpeed, r2, r1, rightThrottle, gp->getModel(), DEADZONE, minRXY, maxRXY);
 
-    double leftPWM = scaleToESC(leftSpeed);
-    double rightPWM = scaleToESC(rightSpeed);
+    double leftPWM = scaleToESC(leftSpeed, ESC_LOW_POINT, ESC_CENTER_POINT, ESC_HIGH_POINT);
+    double rightPWM = scaleToESC(rightSpeed, ESC_LOW_POINT, ESC_CENTER_POINT, ESC_HIGH_POINT);
 
     double leftLinearPWM = makeNice(leftPWM, prevLeft);
     double rightLinearPWM = makeNice(rightPWM, prevRight);
-
-    // Serial.println("Left\t" + String(leftThrottle) + "(" + l2 + ")" + "\tRight\t" + String(rightThrottle) + "(" + r2
-    // +
-    //                ")");
-    // Serial.println("LS\t" + String(leftSpeed) + "(" + l2 + ")" + "\tRS\t" + String(rightSpeed) + "(" + r2 + ")");
 
     Serial.println("ESCL\t" + String(leftLinearPWM) + "(" + leftPWM + ")" + "\tESCR\t" + String(rightLinearPWM) + "(" +
                    rightPWM + ")");
@@ -160,10 +111,46 @@ void handleThrottle(GamepadPtr gp) {
     prevRight = rightLinearPWM;
 }
 
+void calibrateSticks(GamepadPtr gp) {
+    int leftAxis = -gp->axisY();
+    int rightAxis = -gp->axisRY();
+    if (leftAxis < 0) {
+        minXY = min(leftAxis, minXY);
+    } else {
+        maxXY = max(leftAxis, maxXY);
+    }
+    if (rightAxis < 0) {
+        minRXY = min(rightAxis, minRXY);
+    } else {
+        maxRXY = max(rightAxis, maxRXY);
+    }
+}
+
 void loop() {
+    int msDelay = 2;
+
     BP32.update();
     if (myGamepad && myGamepad->isConnected()) {
-        handleThrottle(myGamepad);
+        if (!isCalibrating) {
+            handleThrottle(myGamepad);
+            if (myGamepad->a() && myGamepad->b()) {
+                blinkController(myGamepad);
+                isCalibrating = true;
+                maxXY = maxRXY = minXY = minRXY = 0;
+            }
+        } else {
+            calibrateSticks(myGamepad);
+            if (myGamepad->x() && myGamepad->y()) {
+                blinkController(myGamepad);
+                isCalibrating = false;
+                Serial.println("newVals: ");
+                Serial.println("maxXY: " + String(maxXY));
+                Serial.println("maxRXY: " + String(maxRXY));
+                Serial.println("minXY: " + String(minXY));
+                Serial.println("minRXY: " + String(minRXY));
+            }
+        }
     }
-    delay(2);
+    delay(msDelay);
+    // vTaskDelay(msDelay);
 }
