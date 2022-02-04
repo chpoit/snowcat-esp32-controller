@@ -1,44 +1,9 @@
 #include "utils.h"
 #include <Arduino.h>
 #include <Bluepad32.h>
+#include "controls/stickdata.h"
 
 TaskHandle_t* blinkerTask = nullptr;
-
-int utils::getSpeed(int axis,
-                    bool forward,
-                    bool backward,
-                    int throttleValue,
-                    int model,
-                    int DEADZONE,
-                    int calibratedMin,
-                    int calibratedMax) {
-    if (forward && backward) {
-        return 0;
-    }
-    if (forward) {
-        // Throttle reports as 0 for controllers without analog
-        if (model == Gamepad::CONTROLLER_TYPE_WiiController || model == Gamepad::CONTROLLER_TYPE_SwitchProController ||
-            model == Gamepad::CONTROLLER_TYPE_SwitchJoyConLeft || model == Gamepad::CONTROLLER_TYPE_SwitchJoyConRight ||
-            model == Gamepad::CONTROLLER_TYPE_SwitchJoyConPair) {
-            return 511;
-        }
-        return min(int(ceil(throttleValue / 2)), 511);
-    }
-    if (backward) {
-        return -512;
-    }
-    // Use this to account for
-    if (abs(axis) < DEADZONE) {
-        return 0;
-    }
-    // I just want forward to be positive and backwards to be negative, so I invert the values here
-    axis = -axis;
-    if (axis > 0) {
-        return axis * 511. / calibratedMax;
-    } else {
-        return axis * -512. / calibratedMin;
-    }
-}
 
 void utils::blinker(void* params) {
     auto gp = ((GamepadPtr)params);
@@ -65,4 +30,32 @@ void utils::blinkController(GamepadPtr gp) {
                             0,           /* Priority of the task */
                             blinkerTask, /* Task handle. */
                             0);
+}
+
+void utils::calibrateSticks(GamepadPtr gp, StickData* stickData) {
+    int leftAxisY = -gp->axisY();
+    int rightAxisY = -gp->axisRY();
+    int leftAxisX = gp->axisX();
+    int rightAxisX = gp->axisRX();
+
+    if (leftAxisY < 0) {
+        stickData->minY = min(leftAxisY, stickData->minY);
+    } else {
+        stickData->maxY = max(leftAxisY, stickData->maxY);
+    }
+    if (rightAxisY < 0) {
+        stickData->minRY = min(rightAxisY, stickData->minRY);
+    } else {
+        stickData->maxRY = max(rightAxisY, stickData->maxRY);
+    }
+    if (leftAxisX < 0) {
+        stickData->minX = min(leftAxisX, stickData->minX);
+    } else {
+        stickData->maxX = max(leftAxisX, stickData->maxX);
+    }
+    if (rightAxisX < 0) {
+        stickData->minRX = min(rightAxisX, stickData->minRX);
+    } else {
+        stickData->maxRX = max(rightAxisX, stickData->maxRX);
+    }
 }

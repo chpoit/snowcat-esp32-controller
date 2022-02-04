@@ -1,20 +1,15 @@
 #include <Arduino.h>
 #include <Bluepad32.h>
+#include "controls/stickdata.h"
 #ifndef UTILS_H
 #define UTILS_H
 
 namespace utils {
-int getSpeed(int axis,
-             bool forward,
-             bool backward,
-             int throttleValue,
-             int model,
-             int DEADZONE,
-             int calibratedMin,
-             int calibratedMax);
 
 void blinker(void* params);
 void blinkController(GamepadPtr gp);
+void calibrateSticks(GamepadPtr gp, StickData* stickData);
+
 }  // namespace utils
 
 #endif

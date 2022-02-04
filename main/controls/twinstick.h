@@ -7,15 +7,11 @@
 
 class TwinStick : public ControlScheme {
    public:
-    TwinStick(GamepadPtr gamepad, int deadzone);
+    TwinStick(GamepadPtr gamepad, int deadzone) : ControlScheme(gamepad, deadzone){};
     std::pair<int, int> handleThrottle(void);
-    void calibrate();
 
    private:
-    int maxXY = 511;
-    int maxRXY = 511;
-    int minXY = -512;
-    int minRXY = -512;
+    int getSpeed(int axis, bool forward, bool backward, int throttleValue, int model, int calibratedMin, int calibratedMax);
 };
 
 #endif

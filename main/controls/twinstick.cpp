@@ -2,26 +2,51 @@
 #include "twinstick.h"
 #include "../utils.h"
 
-TwinStick::TwinStick(GamepadPtr gamepad, int deadzone) : ControlScheme(gamepad, deadzone) {}
-
 std::pair<int, int> TwinStick::handleThrottle() {
-    auto gp = this->gamepad;
+    int model = gamepad->getModel();
 
-    int leftSpeed = gp->axisY();
-    int rightSpeed = gp->axisRY();
+    int leftSpeed = gamepad->axisY();
+    int rightSpeed = gamepad->axisRY();
 
-    int leftThrottle = gp->brake();
-    int rightThrottle = gp->throttle();
+    int leftThrottle = gamepad->brake();
+    int rightThrottle = gamepad->throttle();
 
-    bool l1 = gp->l1();
-    bool l2 = gp->l2();
-    bool r1 = gp->r1();
-    bool r2 = gp->r2();
+    bool l1 = gamepad->l1();
+    bool l2 = gamepad->l2();
+    bool r1 = gamepad->r1();
+    bool r2 = gamepad->r2();
 
-    leftSpeed = utils::getSpeed(leftSpeed, l2, l1, leftThrottle, gp->getModel(), this->deadzone, minXY, maxXY);
-    rightSpeed = utils::getSpeed(rightSpeed, r2, r1, rightThrottle, gp->getModel(), this->deadzone, minRXY, maxRXY);
+    leftSpeed = getSpeed(leftSpeed, l2, l1, leftThrottle, model, stickData.minY, stickData.maxY);
+    rightSpeed = getSpeed(rightSpeed, r2, r1, rightThrottle, model, stickData.minRY, stickData.maxRY);
 
     return std::pair<int, int>(leftSpeed, rightSpeed);
 }
 
-void TwinStick::calibrate() {}
+int TwinStick::getSpeed(int axis, bool forward, bool backward, int throttleValue, int model, int calibratedMin, int calibratedMax) {
+    if (forward && backward) {
+        return 0;
+    }
+    if (forward) {
+        // Throttle reports as 0 for controllers without analog
+        if (model == Gamepad::CONTROLLER_TYPE_WiiController || model == Gamepad::CONTROLLER_TYPE_SwitchProController ||
+            model == Gamepad::CONTROLLER_TYPE_SwitchJoyConLeft || model == Gamepad::CONTROLLER_TYPE_SwitchJoyConRight ||
+            model == Gamepad::CONTROLLER_TYPE_SwitchJoyConPair) {
+            return 511;
+        }
+        return min(int(ceil(throttleValue / 2)), 511);
+    }
+    if (backward) {
+        return -512;
+    }
+    // Use this to account for
+    if (abs(axis) < deadzone) {
+        return 0;
+    }
+    // I just want forward to be positive and backwards to be negative, so I invert the values here
+    axis = -axis;
+    if (axis > 0) {
+        return axis * 511. / calibratedMax;
+    } else {
+        return axis * -512. / calibratedMin;
+    }
+}
