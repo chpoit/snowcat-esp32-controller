@@ -23,14 +23,29 @@ limitations under the License.
 
 #include <Arduino.h>
 #include <Bluepad32.h>
-#include <ESP32Servo.h>
+#include "esc/ESC.h"
 
-#define DEADZONE 20
+#define DEADZONE 50
+#define LEFTESC_WHITE_PIN 4
+#define RIGHTESC_WHITE_PIN 14
 
-static GamepadPtr myGamepad;
+#define ESC_CENTER_POINT 1500
+#define ESC_LOW_POINT 1100
+#define ESC_HIGH_POINT 1900
+// #define ESC_LOW_POINT (ESC_CENTER_POINT - 100)
+// #define ESC_HIGH_POINT (ESC_CENTER_POINT + 100)
+
+ESC LEFT_ESC = ESC(LEFTESC_WHITE_PIN);
+ESC RIGHT_ESC = ESC(RIGHTESC_WHITE_PIN);
 
 // This callback gets called any time a new gamepad is connected.
 // Up to 4 gamepads can be connected at the same time.
+
+static GamepadPtr myGamepad;
+
+int prevLeft = ESC_CENTER_POINT;
+int prevRight = ESC_CENTER_POINT;
+
 void onConnectedGamepad(GamepadPtr gp) {
     myGamepad = gp;
     Serial.println("CALLBACK: Gamepad is connected!");
@@ -51,10 +66,30 @@ void setup() {
 
     // Setup the Bluepad32 callbacks
     BP32.setup(&onConnectedGamepad, &onDisconnectedGamepad);
+
+    pinMode(LEFTESC_WHITE_PIN, OUTPUT);
+    pinMode(RIGHTESC_WHITE_PIN, OUTPUT);
+
+    LEFT_ESC.arm();
+    RIGHT_ESC.arm();
 }
 
-int scaleToESC(int axisValue) {
-    return 0;
+// TODO: Add Axis scaling for unbalanced sticks
+// Axis -511 to 512
+// esc 1100 to 1900
+double scaleToESC(int axisValue) {
+    double lowRange = (ESC_CENTER_POINT - ESC_LOW_POINT);
+    double highRange = (ESC_HIGH_POINT - ESC_CENTER_POINT);
+    if (axisValue < 0) {
+        auto scalar = axisValue / -511.;
+        return ESC_CENTER_POINT - (scalar * lowRange);
+    }
+    if (axisValue > 0) {
+        auto scalar = axisValue / 512.;
+        return ESC_CENTER_POINT + (scalar * highRange);
+    }
+
+    return double(ESC_CENTER_POINT);
 }
 
 int getSpeed(int axis, bool forward, bool backward, int throttleValue, int model) {
@@ -81,6 +116,14 @@ int getSpeed(int axis, bool forward, bool backward, int throttleValue, int model
     return -axis;
 }
 
+double makeNice(double target, double current) {
+    double leftToGo = abs(target - current);
+
+    double newChange = min(1., leftToGo);
+
+    return (target > current ? current + newChange : current - newChange);
+}
+
 void handleThrottle(GamepadPtr gp) {
     int leftSpeed = gp->axisY();
     int rightSpeed = gp->axisRY();
@@ -96,40 +139,32 @@ void handleThrottle(GamepadPtr gp) {
     leftSpeed = getSpeed(leftSpeed, l2, l1, leftThrottle, gp->getModel());
     rightSpeed = getSpeed(rightSpeed, r2, r1, rightThrottle, gp->getModel());
 
-    Serial.println("Left\t" + String(leftThrottle) + "(" + l2 + ")" + "\tRight\t" + String(rightThrottle) + "(" + r2 +
+    double leftPWM = scaleToESC(leftSpeed);
+    double rightPWM = scaleToESC(rightSpeed);
+
+    double leftLinearPWM = makeNice(leftPWM, prevLeft);
+    double rightLinearPWM = makeNice(rightPWM, prevRight);
+
+    // Serial.println("Left\t" + String(leftThrottle) + "(" + l2 + ")" + "\tRight\t" + String(rightThrottle) + "(" + r2
+    // +
+    //                ")");
+    // Serial.println("LS\t" + String(leftSpeed) + "(" + l2 + ")" + "\tRS\t" + String(rightSpeed) + "(" + r2 + ")");
+
+    Serial.println("ESCL\t" + String(leftLinearPWM) + "(" + l2 + ")" + "\tESCR\t" + String(rightLinearPWM) + "(" + r2 +
                    ")");
-    Serial.println("LS\t" + String(leftSpeed) + "(" + l2 + ")" + "\tRS\t" + String(rightSpeed) + "(" + r2 + ")");
+    Serial.println("ESCL\t" + String(leftPWM) + "(" + l2 + ")" + "\tESCR\t" + String(rightPWM) + "(" + r2 + ")");
+
+    LEFT_ESC.spin(leftLinearPWM);
+    RIGHT_ESC.spin(rightLinearPWM);
+
+    prevLeft = leftLinearPWM;
+    prevRight = rightLinearPWM;
 }
 
-// Arduino loop function. Runs in CPU 1
 void loop() {
     BP32.update();
-
-    // It is safe to always do this before using the gamepad API.
-    // This guarantees that the gamepad is valid and connected.
     if (myGamepad && myGamepad->isConnected()) {
         handleThrottle(myGamepad);
-
-        // Another way to query the buttons, is by calling buttons(), or
-        // miscButtons() which return a bitmask.
-        // Some gamepads also have DPAD, axis and more.
-        // snprintf(buffer, sizeof(buffer) - 1,
-        //          "dpad: 0x%02x, buttons: 0x%04x, axis L: %4d, %4d, axis R: %4d, "
-        //          "%4d, brake: %4d, throttle: %4d, misc: 0x%02x",
-        //          myGamepad->dpad(),        // DPAD
-        //          myGamepad->buttons(),     // bitmask of pressed buttons
-        //          myGamepad->axisX(),       // (-511 - 512) left X Axis
-        //          myGamepad->axisY(),       // (-511 - 512) left Y axis
-        //          myGamepad->axisRX(),      // (-511 - 512) right X axis
-        //          myGamepad->axisRY(),      // (-511 - 512) right Y axis
-        //          myGamepad->brake(),       // (0 - 1023): brake button
-        //          myGamepad->throttle(),    // (0 - 1023): throttle (AKA gas) button
-        //          myGamepad->miscButtons()  // bitmak of pressed "misc" buttons
-        // );
-
-        // You can query the axis and other properties as well. See Gamepad.h
-        // For all the available functions.
     }
-
-    delay(150);
+    delay(100);
 }
