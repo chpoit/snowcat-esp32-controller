@@ -150,9 +150,8 @@ void handleThrottle(GamepadPtr gp) {
     //                ")");
     // Serial.println("LS\t" + String(leftSpeed) + "(" + l2 + ")" + "\tRS\t" + String(rightSpeed) + "(" + r2 + ")");
 
-    Serial.println("ESCL\t" + String(leftLinearPWM) + "(" + l2 + ")" + "\tESCR\t" + String(rightLinearPWM) + "(" + r2 +
-                   ")");
-    Serial.println("ESCL\t" + String(leftPWM) + "(" + l2 + ")" + "\tESCR\t" + String(rightPWM) + "(" + r2 + ")");
+    Serial.println("ESCL\t" + String(leftLinearPWM) + "(" + leftPWM + ")" + "\tESCR\t" + String(rightLinearPWM) + "(" +
+                   rightPWM + ")");
 
     LEFT_ESC.spin(leftLinearPWM);
     RIGHT_ESC.spin(rightLinearPWM);
@@ -166,5 +165,5 @@ void loop() {
     if (myGamepad && myGamepad->isConnected()) {
         handleThrottle(myGamepad);
     }
-    delay(100);
+    delay(2);
 }
