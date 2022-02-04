@@ -1,17 +1,68 @@
 # snowcat-esp32-controller
 
+**Make sure you realize I have no idea what I'm talking about when it comes to electronics, I just do things and they end up working. I see no reason why anything here should be wrong**
+
 An esp32 based controller for the RCTF Snowcat
 
 Project based on : https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template
 
-To connect a controller, just put it in sync mode and it should connect immediately.
 
-The controls are "twinstick" controls, so the left side of the controller controls the left track, and the right side, the right track. 
+# How to use
+To connect a controller, just put it in sync mode and it should connect immediately. Some controllers remember the ESP and can reconnect without being put back in sync mode.
+
+
+## Control Types
+Common controls:
+- Calibration
+  - Pressing A and B (or Circle and Cross) as the same times enables "calibration" mode 
+    - The controller blinks to let you know
+    - Spin the sticks round and round a couple of times
+    - This sets the maximum values for the less well made controllers to give you "full" range
+    - Should you set "poor" values that would make you go over 100% speed when at full stick tilt, the speed will not keep increasing 
+  - Press X and Y (or Square and Triangle) at the same time to save and exit.
+    - The controller blinks to let you know
+  - Currenlty no calibration for the analog triggers
+  - Calibration is currently lost on power loss, but is transfered to "new" controllers.
+
+### **"Twinstick"**
+This is the default mode where the left side of the controller controls the left track, and the right side, the right track. 
 - L2/R2 go forward (Analog controllers have variable speed)
 - L1/R1 go backward
 - Left Stick/Right stick both control one side
   - Only up/down movement is registered. left/right does nothing
 
+TODO: Have a way to "reduce" the throttle of the analog trigers by tilting the sticks in the opposite direction
+### **Racecar**
+"Racecar" controls are coming soon TM
+
+
+# Circuit Board
+
+Here is a rough, poorly made, sketch of the circuit.
+
+![Kicad](misc/circuit-screenshot.png)
+
+Here's a couple things to note. 
+- Since electricity is magic and mixing voltages is weird, I would avoid plugging the ESC's grounds in the same "ground" as the 5V ground
+  - I use the ground besides the 3.3v pin to ground both of the ESC's black wires
+  - It should be fine, but eh, if you insist on doing it, use a diode coming out of the esc's ground.
+- You can power the ESP board using a DC-DC 3.3v converter, you just have to feed it into the 3.3V pin.
+  - As long as you have a converted that's rated for your battery. A lot go up to 30v so if should be fine with anything between 2s and 6s. 
+  - If you somehow are running a 2s battery, you should probably opt for a 3.3v converter as some of the 5v converters fail to output under 7volts. A 5V would thus theoretically only work for about half if the "safe" voltage of your 2s battery. It might also just start outputting a lower voltage and your ESP32 may or may not decide that it's fine. I would try to avoid it however.
+- I have an inline switch between the positive of the battery and the DC-DC. If you want a switch, make sure to do that, otherwise turning it off wont shut the ESP down because there are grounds everywhere.
+- I use pin 2 and 4 (IO2 and IO4) as the PWM generators for the ESCs because they were easy to set up in a way I wouldn't have to use more magnet wire.
+- You might notice that pin d23 is awfully close to the + blob of the battery, they don't make contact, but I made sure to trim everything down and add Kapton tape
+  - This could have been avoided had I opted to use "hotswap" connectors for all the 16pins, I just didn't feel like it.
+- Make sure you test everything to make sure there are no shorts
+  - One of the dc-dc converters was bad and sent sparks flying when I plugged in the battery. 
+- Please disregard my poor soldering job.
+- I have no idea how to use kicad, so I know, the circuit is ugly
+  
+
+Here are a couple pictures of the board I made for those who like to see stuff: 
+![Full](misc/full.jpg)
+![Front](misc/front.jpg)
+![Back](misc/back.jpg)
 
 # Building the firmware
 
@@ -23,7 +74,7 @@ Includes the following ESP-IDF components, with a pre-configured `sdkconfig` fil
 * [Bluepad32](https://gitlab.com/ricardoquesada/bluepad32/) component
 * [BTStack](https://github.com/bluekitchen/btstack) component
 
-## How to compile it
+## How to compile it (This section is taken from the Bluepad32 template)
 
 The following are the instructions for **Linux**, and should work for **macOS** as well. For **Windows**, use the
 [ESP-IDF online installer][esp-idf-online-installer], and select `release/v4.4` branch.
@@ -87,3 +138,4 @@ The following are the instructions for **Linux**, and should work for **macOS** 
     # Flash + open debug terminal
     idf.py flash
     ```
+4. Once the firmware is flashed you should be able to just plug in everything and have everything work.
