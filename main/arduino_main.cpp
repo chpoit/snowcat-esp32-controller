@@ -47,66 +47,84 @@ int minXY = -512;
 int minRXY = -512;
 bool isCalibrating = false;
 
-void onConnectedGamepad(GamepadPtr gp) {
-    myGamepad = gp;
-    Serial.println("CALLBACK: Gamepad is connected!");
-    LEFT_ESC.arm();
-    RIGHT_ESC.arm();
-}
+TaskHandle_t* controllerTask = nullptr;
 
 void onDisconnectedGamepad(GamepadPtr gp) {
     Serial.println("CALLBACK: Gamepad is disconnected!");
     myGamepad = nullptr;
     LEFT_ESC.disarm();
     RIGHT_ESC.disarm();
+
+    vTaskDelete(*controllerTask);
 }
 
 // Arduino setup function. Runs in CPU 1
-void setup() {
-    Serial.begin(115200);
-
-    String fv = BP32.firmwareVersion();
-    Serial.print("Firmware: ");
-    Serial.println(fv);
-
-    // Setup the Bluepad32 callbacks
-    BP32.setup(&onConnectedGamepad, &onDisconnectedGamepad);
-
-    pinMode(LEFTESC_WHITE_PIN, OUTPUT);
-    pinMode(RIGHTESC_WHITE_PIN, OUTPUT);
-    delay(250);
-}
 
 // TODO: Figure out why sometimes it crashes for no reason
-void handleThrottle(GamepadPtr gp) {
-    int leftSpeed = gp->axisY();
-    int rightSpeed = gp->axisRY();
+void handleThrottle(void* params) {
+    for (;;) {
+        if (isCalibrating) {
+            continue;
+        }
+        if (myGamepad && myGamepad->isConnected()) {
+            auto gp = ((GamepadPtr)params);
+            int leftSpeed = gp->axisY();
+            int rightSpeed = gp->axisRY();
 
-    int leftThrottle = gp->brake();
-    int rightThrottle = gp->throttle();
+            int leftThrottle = gp->brake();
+            int rightThrottle = gp->throttle();
 
-    bool l1 = gp->l1();
-    bool l2 = gp->l2();
-    bool r1 = gp->r1();
-    bool r2 = gp->r2();
+            bool l1 = gp->l1();
+            bool l2 = gp->l2();
+            bool r1 = gp->r1();
+            bool r2 = gp->r2();
 
-    leftSpeed = getSpeed(leftSpeed, l2, l1, leftThrottle, gp->getModel(), DEADZONE, minXY, maxXY);
-    rightSpeed = getSpeed(rightSpeed, r2, r1, rightThrottle, gp->getModel(), DEADZONE, minRXY, maxRXY);
+            leftSpeed = getSpeed(leftSpeed, l2, l1, leftThrottle, gp->getModel(), DEADZONE, minXY, maxXY);
+            rightSpeed = getSpeed(rightSpeed, r2, r1, rightThrottle, gp->getModel(), DEADZONE, minRXY, maxRXY);
 
-    double leftPWM = scaleToESC(leftSpeed, ESC_LOW_POINT, ESC_CENTER_POINT, ESC_HIGH_POINT);
-    double rightPWM = scaleToESC(rightSpeed, ESC_LOW_POINT, ESC_CENTER_POINT, ESC_HIGH_POINT);
+            double leftPWM = scaleToESC(leftSpeed, ESC_LOW_POINT, ESC_CENTER_POINT, ESC_HIGH_POINT);
+            double rightPWM = scaleToESC(rightSpeed, ESC_LOW_POINT, ESC_CENTER_POINT, ESC_HIGH_POINT);
 
-    double leftLinearPWM = makeNice(leftPWM, prevLeft);
-    double rightLinearPWM = makeNice(rightPWM, prevRight);
+            double leftLinearPWM = makeNice(leftPWM, prevLeft);
+            double rightLinearPWM = makeNice(rightPWM, prevRight);
 
-    Serial.println("ESCL\t" + String(leftLinearPWM) + "(" + leftPWM + ")" + "\tESCR\t" + String(rightLinearPWM) + "(" +
-                   rightPWM + ")");
+            Serial.println("ESCL\t" + String(leftLinearPWM) + "(" + leftPWM + ")" + "\tESCR\t" +
+                           String(rightLinearPWM) + "(" + rightPWM + ")");
 
-    LEFT_ESC.spin(leftLinearPWM);
-    RIGHT_ESC.spin(rightLinearPWM);
+            LEFT_ESC.spin(leftLinearPWM);
+            RIGHT_ESC.spin(rightLinearPWM);
 
-    prevLeft = leftLinearPWM;
-    prevRight = rightLinearPWM;
+            prevLeft = leftLinearPWM;
+            prevRight = rightLinearPWM;
+        }
+        delay(2);
+    }
+}
+
+void createControllerTask(GamepadPtr gp) {
+    if (controllerTask != nullptr) {
+        delete controllerTask;
+    }
+    controllerTask = new TaskHandle_t();
+    xTaskCreatePinnedToCore(handleThrottle, /* Function to implement the task */
+                            "throttle",     /* Name of the task */
+                            10000,          /* Stack size in words */
+                            (void*)gp,      /* Task input parameter */
+                            0,              /* Priority of the task */
+                            controllerTask, /* Task handle. */
+                            0);
+}
+
+void onConnectedGamepad(GamepadPtr gp) {
+    if (myGamepad != nullptr) {
+        return;
+    }
+    createControllerTask(gp);
+
+    myGamepad = gp;
+    Serial.println("CALLBACK: Gamepad is connected!");
+    LEFT_ESC.arm();
+    RIGHT_ESC.arm();
 }
 
 void calibrateSticks(GamepadPtr gp) {
@@ -124,13 +142,26 @@ void calibrateSticks(GamepadPtr gp) {
     }
 }
 
-void loop() {
-    int msDelay = 2;
+void setup() {
+    Serial.begin(115200);
 
+    String fv = BP32.firmwareVersion();
+    Serial.print("Firmware: ");
+    Serial.println(fv);
+
+    // Setup the Bluepad32 callbacks
+    BP32.setup(&onConnectedGamepad, &onDisconnectedGamepad);
+
+    pinMode(LEFTESC_WHITE_PIN, OUTPUT);
+    pinMode(RIGHTESC_WHITE_PIN, OUTPUT);
+    delay(250);
+}
+
+void loop() {
     BP32.update();
     if (myGamepad && myGamepad->isConnected()) {
         if (!isCalibrating) {
-            handleThrottle(myGamepad);
+            // handleThrottle(myGamepad);
             if (myGamepad->a() && myGamepad->b()) {
                 blinkController(myGamepad);
                 isCalibrating = true;
@@ -149,5 +180,5 @@ void loop() {
             }
         }
     }
-    delay(msDelay);
+    delay(150);
 }
