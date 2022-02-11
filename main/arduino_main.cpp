@@ -6,7 +6,9 @@
 #include <Arduino.h>
 #include <Bluepad32.h>
 #include "accel/accel.h"
+#include "accel/instant.h"
 #include "accel/linear.h"
+#include "accel/partway.h"
 #include "controls/controlscheme.h"
 #include "controls/stickdata.h"
 #include "controls/twinstick.h"
@@ -14,6 +16,7 @@
 #include "utils.h"
 
 #define LINEAR_ACCELERATION 1
+#define PARTWAY_ACCELERATION 0.5
 #define DEADZONE 50
 #define LEFTESC_WHITE_PIN 2
 #define RIGHTESC_WHITE_PIN 4
@@ -29,7 +32,8 @@ ESC RIGHT_ESC = ESC(RIGHTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTE
 
 static GamepadPtr myGamepad;
 static ControlScheme* controlScheme;
-static Accel* acceleration = new Linear(LINEAR_ACCELERATION);
+// static Accel* acceleration = new Linear(LINEAR_ACCELERATION);
+static Accel* acceleration = new Partway(PARTWAY_ACCELERATION);
 StickData calibrationData = StickData();
 
 int prevLeft = ESC_CENTER_POINT;
