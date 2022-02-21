@@ -33,17 +33,20 @@ You probably don't have to change anything, but here are the four "easy" to twea
   - You could set it at 0 if your ESCs don't randomly pulse when at 1500
 
 ## Control Types
+
+
 Common controls:
+- `select/share/screenshot/minus/'menu back'`: Changes the Control Type
 - Acceleration
-  - The current linear acceleration takes a few seconds to ramp up to max or slow down
   - I'm not sure of what safe increments we can use so I'm looking for input on that
+  - Currently goes "halfway" every 10ms
 - Deadzones
   - A default deadzone of around 10% of the stick's travel is in place
   - It can be lowered, but it's in place because one of my controllers is awful and kept jerking the motors back and forth.
   - Change the `DEADZONE` value in `arduino_main.cpp`
 - ESC Ranges
-  - In my case, my escs do nothing between ~1464PWM and 1500 PWM. the middle point is still set to 1500, but you might see some jerk forward once you stop going backwards, and the backwards controls might be "slow" to respond if you are in a similar situation
-  - I
+  - In my case, my escs do nothing between ~1464PWM and 1500 PWM. The middle point is still set to 1500, but you might see some jerk forward once you stop going backwards, and the backwards controls might be "slow" to respond if you are in a similar situation
+  - To adjust for that jerking, whenever 1500 pwm is seen, 1490 is actual sent to the ESC. This can be adjusted with `ESC_CENTER_OFFSET` 
 - Calibration
   - Pressing A and B (or Circle and Cross) as the same times enables "calibration" mode 
     - The controller blinks to let you know
@@ -55,7 +58,7 @@ Common controls:
   - Currenlty no calibration for the analog triggers
   - Calibration is currently lost on power loss, but is transfered to "new" controllers.
 
-### **"Tank-style"**
+### **"Tank-style"** (Player 1/red)
 This is the default mode where the left side of the controller controls the left track, and the right side, the right track. 
 - L2/R2 go forward (Analog controllers have variable speed)
 - L1/R1 go backward
@@ -63,7 +66,7 @@ This is the default mode where the left side of the controller controls the left
   - Only up/down movement is registered. left/right does nothing
 
 TODO: Have a way to "reduce" the throttle of the analog triggers by tilting the sticks in the opposite direction
-### **Racecar**
+### **Racecar** (Player 2/green)
 "Racecar" controls are coming soon TM
 - R2: Forward
 - L2: Backwards
@@ -71,7 +74,7 @@ TODO: Have a way to "reduce" the throttle of the analog triggers by tilting the 
   - Left goes left
   - Right goes right
 
-### **Single Stick**
+### **Single Stick** (Player 3/blue)
 "SingleStick" controls are coming soon TM
 - Right Stick
   - Left goes left

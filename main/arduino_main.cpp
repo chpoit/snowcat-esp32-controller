@@ -10,6 +10,8 @@
 #include "accel/linear.h"
 #include "accel/partway.h"
 #include "controls/controlscheme.h"
+#include "controls/racecar.h"
+#include "controls/singlestick.h"
 #include "controls/stickdata.h"
 #include "controls/tank.h"
 #include "esc/ESC.h"
@@ -36,6 +38,8 @@ ESC RIGHT_ESC = ESC(RIGHTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTE
 
 static GamepadPtr myGamepad;
 static ControlScheme* controlScheme;
+static utils::LinkedList<ControlScheme> schemeList;
+
 // static Accel* acceleration = new Linear(LINEAR_ACCELERATION);
 static Accel* acceleration = new Partway(PARTWAY_ACCELERATION);
 StickData calibrationData = StickData();
@@ -46,15 +50,6 @@ int prevRight = ESC_CENTER_POINT;
 bool isCalibrating = false;
 
 TaskHandle_t* controllerTask = nullptr;
-
-void onDisconnectedGamepad(GamepadPtr gp) {
-    Serial.println("CALLBACK: Gamepad is disconnected!");
-    myGamepad = nullptr;
-    LEFT_ESC.disarm();
-    RIGHT_ESC.disarm();
-
-    vTaskDelete(*controllerTask);
-}
 
 void handleThrottle(void* params) {
     for (;;) {
@@ -108,12 +103,26 @@ void onConnectedGamepad(GamepadPtr gp) {
     createControllerTask(gp);
 
     myGamepad = gp;
-    controlScheme = new Tank(myGamepad, DEADZONE);
+    schemeList = {new Tank(myGamepad, DEADZONE), new Racecar(myGamepad, DEADZONE), new SingleStick(myGamepad, DEADZONE)};
+
+    controlScheme = schemeList.getCurrent();
     controlScheme->calibrate(calibrationData);
+    Serial.println("CALLBACK: CALIBRATED");
+    controlScheme->setLEDs();
+    Serial.println("CALLBACK: LEDS CONNECTED");
 
     Serial.println("CALLBACK: Gamepad is connected!");
     LEFT_ESC.arm();
     RIGHT_ESC.arm();
+}
+
+void onDisconnectedGamepad(GamepadPtr gp) {
+    Serial.println("CALLBACK: Gamepad is disconnected!");
+    myGamepad = nullptr;
+    LEFT_ESC.disarm();
+    RIGHT_ESC.disarm();
+
+    vTaskDelete(*controllerTask);
 }
 
 void setup() {
@@ -132,11 +141,17 @@ void loop() {
                 utils::blinkController(myGamepad);
                 isCalibrating = true;
                 calibrationData = StickData::Zeroed();
+                myGamepad->setColorLED(255, 255, 255);
+                myGamepad->setPlayerLEDs(16);
+            }
+            if (myGamepad->miscBack()) {
+                controlScheme = schemeList.getNext();
+                controlScheme->setLEDs();
             }
         } else {
             utils::calibrateSticks(myGamepad, &calibrationData);
             if (myGamepad->x() && myGamepad->y()) {
-                utils::blinkController(myGamepad);
+                // utils::blinkController(myGamepad);
                 Serial.println("newVals: ");
                 Serial.println("minY: " + String(calibrationData.minY));
                 Serial.println("maxY: " + String(calibrationData.maxY));
@@ -147,6 +162,7 @@ void loop() {
                 Serial.println("minRX: " + String(calibrationData.minRX));
                 Serial.println("maxRX: " + String(calibrationData.maxRX));
                 controlScheme->calibrate(calibrationData);
+                controlScheme->setLEDs();
 
                 isCalibrating = false;
             }

@@ -1,5 +1,6 @@
 
 #include "controlscheme.h"
+#include <Arduino.h>
 #include "stickdata.h"
 
 ControlScheme::ControlScheme(GamepadPtr gamepad, int deadzone) {
@@ -9,6 +10,11 @@ ControlScheme::ControlScheme(GamepadPtr gamepad, int deadzone) {
 
 void ControlScheme::calibrate(StickData stickData) {
     this->stickData = stickData;
+}
+
+void ControlScheme::setLEDs() {
+    gamepad->setPlayerLEDs(playerLEDs);
+    gamepad->setColorLED(std::get<0>(color), std::get<1>(color), std::get<2>(color));
 }
 
 double ControlScheme::scaleX(int axis) {

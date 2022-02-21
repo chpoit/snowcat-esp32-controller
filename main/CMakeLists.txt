@@ -16,6 +16,7 @@ if(DEFINED ENV{BLUEPAD32_ARDUINO})
     list(APPEND srcs "controls/controlscheme.cpp")
     list(APPEND srcs "controls/tank.cpp")
     list(APPEND srcs "controls/racecar.cpp")
+    list(APPEND srcs "controls/singlestick.cpp")
     list(APPEND requires "bluepad32_arduino" "arduino")
 endif()
 

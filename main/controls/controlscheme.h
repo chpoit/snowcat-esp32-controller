@@ -19,6 +19,11 @@ class ControlScheme {
     ControlScheme(GamepadPtr gamepad, int deadzone);
     virtual std::pair<int, int> handleThrottle(void) = 0;
     void calibrate(StickData stickData);
+
+    int playerLEDs = 0;
+    std::tuple<int, int, int> color = {0, 0, 0};
+
+    void setLEDs();
 };
 
 #endif

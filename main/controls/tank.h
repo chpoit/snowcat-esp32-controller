@@ -7,7 +7,10 @@
 
 class Tank : public ControlScheme {
    public:
-    Tank(GamepadPtr gamepad, int deadzone) : ControlScheme(gamepad, deadzone){};
+    Tank(GamepadPtr gamepad, int deadzone) : ControlScheme(gamepad, deadzone) {
+        playerLEDs = 1;
+        color = std::tuple<int, int, int>(255, 0, 0);
+    };
     std::pair<int, int> handleThrottle(void);
 
    private:

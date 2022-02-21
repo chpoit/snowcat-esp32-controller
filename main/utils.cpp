@@ -9,7 +9,7 @@ void utils::blinker(void* params) {
     auto gp = ((GamepadPtr)params);
     for (int i = 0; i < 10; i++) {
         int cLed = i % 2 ? 255 : 0;
-        int pLed = i % 2 ? 1 : 0;
+        int pLed = i % 2 ? 15 : 0;
 
         gp->setColorLED(cLed, cLed, cLed);
         gp->setPlayerLEDs(pLed);
