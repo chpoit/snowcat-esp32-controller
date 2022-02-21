@@ -11,7 +11,7 @@
 #include "accel/partway.h"
 #include "controls/controlscheme.h"
 #include "controls/stickdata.h"
-#include "controls/twinstick.h"
+#include "controls/tank.h"
 #include "esc/ESC.h"
 #include "utils.h"
 
@@ -24,11 +24,15 @@
 #define ESC_CENTER_POINT 1500
 #define ESC_LOW_POINT 1100
 #define ESC_HIGH_POINT 1900
+#define ESC_CENTER_OFFSET -10
+
+#define THROTTLE_MS_DELAY 10
+
 // #define ESC_LOW_POINT (ESC_CENTER_POINT - 100)
 // #define ESC_HIGH_POINT (ESC_CENTER_POINT + 100)
 
-ESC LEFT_ESC = ESC(LEFTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT);
-ESC RIGHT_ESC = ESC(RIGHTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT);
+ESC LEFT_ESC = ESC(LEFTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT, ESC_CENTER_OFFSET);
+ESC RIGHT_ESC = ESC(RIGHTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT, ESC_CENTER_OFFSET);
 
 static GamepadPtr myGamepad;
 static ControlScheme* controlScheme;
@@ -79,7 +83,7 @@ void handleThrottle(void* params) {
             prevLeft = leftLinearPWM;
             prevRight = rightLinearPWM;
         }
-        delay(1);
+        delay(THROTTLE_MS_DELAY);
     }
 }
 
@@ -104,7 +108,7 @@ void onConnectedGamepad(GamepadPtr gp) {
     createControllerTask(gp);
 
     myGamepad = gp;
-    controlScheme = new TwinStick(myGamepad, DEADZONE);
+    controlScheme = new Tank(myGamepad, DEADZONE);
     controlScheme->calibrate(calibrationData);
 
     Serial.println("CALLBACK: Gamepad is connected!");

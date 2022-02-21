@@ -1,11 +1,12 @@
 #include "ESC.h"
 #include "scaler.h"
 
-ESC::ESC(int pin, int min, int max, int centerPoint) {
+ESC::ESC(int pin, int min, int max, int centerPoint, int centerOffset) {
     this->pin = pin;
     this->min = min;
     this->max = max;
     this->centerPoint = centerPoint;
+    this->centerOffset = centerOffset;
     this->servo = Servo();
     this->scaler = new Scaler(min, centerPoint, max);
 }
@@ -21,6 +22,10 @@ void ESC::disarm(void) {
 }
 
 void ESC::spin(int pwm) {
+    if (pwm == this->centerPoint) {
+        pwm += this->centerOffset;
+    }
+
     if (pwm > this->max) {
         pwm = this->max;
     }

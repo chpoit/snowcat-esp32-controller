@@ -48,16 +48,30 @@ Common controls:
   - Currenlty no calibration for the analog triggers
   - Calibration is currently lost on power loss, but is transfered to "new" controllers.
 
-### **"Twinstick"**
+### **"Tank-style"**
 This is the default mode where the left side of the controller controls the left track, and the right side, the right track. 
 - L2/R2 go forward (Analog controllers have variable speed)
 - L1/R1 go backward
 - Left Stick/Right stick both control one side
   - Only up/down movement is registered. left/right does nothing
 
-TODO: Have a way to "reduce" the throttle of the analog trigers by tilting the sticks in the opposite direction
+TODO: Have a way to "reduce" the throttle of the analog triggers by tilting the sticks in the opposite direction
 ### **Racecar**
 "Racecar" controls are coming soon TM
+- R2: Forward
+- L2: Backwards
+- Right stick
+  - Left goes left
+  - Right goes right
+
+### **Single Stick**
+"SingleStick" controls are coming soon TM
+- Right Stick
+  - Left goes left
+  - Right goes right
+  - Up goes forward
+  - Down goes backward
+
 
 
 # Circuit Board

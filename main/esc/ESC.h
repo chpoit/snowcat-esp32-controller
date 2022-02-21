@@ -12,9 +12,10 @@ class ESC {
     int min;
     int max;
     int centerPoint;
+    int centerOffset;
 
    public:
-    ESC(int pin, int min, int max, int centerPoint);
+    ESC(int pin, int min, int max, int centerPoint, int centerOffset = 0);
     void arm(void);
     void disarm(void);
     void spin(int pwm);

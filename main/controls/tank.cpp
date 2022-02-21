@@ -1,8 +1,8 @@
 
-#include "twinstick.h"
+#include "tank.h"
 #include "../utils.h"
 
-std::pair<int, int> TwinStick::handleThrottle() {
+std::pair<int, int> Tank::handleThrottle() {
     int model = gamepad->getModel();
 
     int leftSpeed = gamepad->axisY();
@@ -16,13 +16,16 @@ std::pair<int, int> TwinStick::handleThrottle() {
     bool r1 = gamepad->r1();
     bool r2 = gamepad->r2();
 
-    leftSpeed = getSpeed(leftSpeed, l2, l1, leftThrottle, model, stickData.minY, stickData.maxY);
-    rightSpeed = getSpeed(rightSpeed, r2, r1, rightThrottle, model, stickData.minRY, stickData.maxRY);
+    leftSpeed = getAxisValue(leftSpeed, l2, l1, leftThrottle, model);
+    rightSpeed = getAxisValue(rightSpeed, r2, r1, rightThrottle, model);
+
+    leftSpeed = scaleY(leftSpeed);
+    rightSpeed = scaleRY(rightSpeed);
 
     return std::pair<int, int>(leftSpeed, rightSpeed);
 }
 
-int TwinStick::getSpeed(int axis, bool forward, bool backward, int throttleValue, int model, int calibratedMin, int calibratedMax) {
+int Tank::getAxisValue(int axis, bool forward, bool backward, int throttleValue, int model) {
     if (forward && backward) {
         return 0;
     }
@@ -44,9 +47,5 @@ int TwinStick::getSpeed(int axis, bool forward, bool backward, int throttleValue
     }
     // I just want forward to be positive and backwards to be negative, so I invert the values here
     axis = -axis;
-    if (axis > 0) {
-        return axis * 511. / calibratedMax;
-    } else {
-        return axis * -512. / calibratedMin;
-    }
+    return axis;
 }

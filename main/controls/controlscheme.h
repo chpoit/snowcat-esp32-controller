@@ -10,6 +10,11 @@ class ControlScheme {
     StickData stickData;
     int deadzone;
 
+    double scaleX(int axis);
+    double scaleY(int axis);
+    double scaleRX(int axis);
+    double scaleRY(int axis);
+
    public:
     ControlScheme(GamepadPtr gamepad, int deadzone);
     virtual std::pair<int, int> handleThrottle(void) = 0;
