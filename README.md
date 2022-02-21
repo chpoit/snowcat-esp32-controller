@@ -21,10 +21,16 @@ To connect a controller, just put it in sync mode and it should connect immediat
 
 ## Configuration
 You probably don't have to change anything, but here are the four "easy" to tweak values
-- `LINEAR_ACCELERATION`: Changes how fast the motors accelerate
+- `LINEAR_ACCELERATION`: Changes how fast the motors accelerate (for linear acceleration)
+- `PARTWAY_ACCELERATION`: Changes how much of the PWM change left to go is applied (for partway acceleration)
 - `DEADZONE`: Changes the stick's deadzone
 - `LEFTESC_WHITE_PIN`: The pin in which the white cable is plugged in. Change this if you plugged it in somewhere else, or if you find recompiling the firmware simpler than swapping the two ESC cables.
 - `RIGHTESC_WHITE_PIN`: The pin in which the other white cable is plugged in. Change this if you plugged it in somewhere else, or if you find recompiling the firmware simpler than swapping the two ESC cables
+- `THROTTLE_MS_DELAY`: This is the delay between when the speed changes, currently set at `10ms`
+- `ESC_CENTER_OFFSET`: This is to take into account the "true" deadzone of the ESCs
+  - It changes the PWM by that value whenever the pwm is equal to `ESC_CENTER_POINT` (1500)
+  - Default is `-10`, ("center" pwm is thus 1490)
+  - You could set it at 0 if your ESCs don't randomly pulse when at 1500
 
 ## Control Types
 Common controls:
@@ -37,6 +43,7 @@ Common controls:
   - Change the `DEADZONE` value in `arduino_main.cpp`
 - ESC Ranges
   - In my case, my escs do nothing between ~1464PWM and 1500 PWM. the middle point is still set to 1500, but you might see some jerk forward once you stop going backwards, and the backwards controls might be "slow" to respond if you are in a similar situation
+  - I
 - Calibration
   - Pressing A and B (or Circle and Cross) as the same times enables "calibration" mode 
     - The controller blinks to let you know
