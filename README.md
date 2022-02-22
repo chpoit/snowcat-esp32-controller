@@ -124,8 +124,37 @@ Includes the following ESP-IDF components, with a pre-configured `sdkconfig` fil
 
 ## How to compile it (This section is taken from the Bluepad32 template)
 
-The following are the instructions for **Linux**, and should work for **macOS** as well. For **Windows**, use the
-[ESP-IDF online installer][esp-idf-online-installer], and select `release/v4.4` branch.
+### For Windows
+
+1. Install [ESP-IDF v4.4][esp-idf-windows-installer]. For further info, read: [ESP-IDF Getting Started for Windows][esp-idf-windows-setup]
+
+   * Either the Online or Offline version shoud work
+   * When asked which components to install, don't change anything. Default options are Ok.
+   * When asked whether ESP can modify the system, answer "Yes"
+
+2. Launch the "ESP-IDF v4.4 CMD" (type that in the Windows search box)
+
+3. From the ESP-IDF cmd, clone the template
+
+   ```sh
+       git clone --recursive https://github.com/chpoit/snowcat-esp32-controller.git snowcat-esp32-controller
+   ```
+
+4. Compile it
+
+    ```sh
+    # Compile it
+    cd snowcat-esp32-controller
+    idf.py build
+
+    # Flash + open debug terminal
+    idf.py flash monitor
+    ```
+
+[esp-idf-windows-setup]: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/windows-setup.html
+[esp-idf-windows-installer]: https://dl.espressif.com/dl/esp-idf/?idf=4.4
+
+### For Linux / macOS
 
 1. Requirements and permissions
 
