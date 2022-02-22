@@ -164,7 +164,6 @@ The following are the instructions for **Linux**, and should work for **macOS** 
     ```sh
     # Do it everytime you want to start a new project
     # Clone the template somewhere
-    mkdir ~/src && cd ~/src
     git clone --recursive https://github.com/chpoit/snowcat-esp32-controller.git snowcat-esp32-controller
     ```
 

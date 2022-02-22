@@ -146,6 +146,7 @@ void loop() {
             }
             if (myGamepad->miscBack()) {
                 controlScheme = schemeList.getNext();
+                controlScheme->calibrate(calibrationData);
                 controlScheme->setLEDs();
             }
         } else {
