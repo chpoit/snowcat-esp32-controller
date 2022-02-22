@@ -11,9 +11,11 @@ std::pair<int, int> Racecar::handleThrottle(void) {
     int accelThrottle = gamepad->throttle();
 
     if (l2 && r2){
-
+        yAxis = 0;
+    }else{
+        
     }
 
 
-    return std::pair<int, int>(0, 0);
+    return std::pair<int, int>(, 0);
 }

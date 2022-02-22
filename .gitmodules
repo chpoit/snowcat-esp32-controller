@@ -1,3 +1,6 @@
 [submodule "components/arduino"]
 	path = components/arduino
 	url = https://github.com/espressif/arduino-esp32.git
+[submodule "ESP32Servo"]
+	path = components/ESP32Servo
+	url = https://github.com/jkb-git/ESP32Servo
