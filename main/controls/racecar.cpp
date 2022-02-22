@@ -1,7 +1,6 @@
 #include "racecar.h"
 
 std::pair<int, int> Racecar::handleThrottle(void) {
-
     int yAxis = 0;
 
     bool l2 = gamepad->l2();
@@ -10,12 +9,10 @@ std::pair<int, int> Racecar::handleThrottle(void) {
     int backThrottle = gamepad->brake();
     int accelThrottle = gamepad->throttle();
 
-    if (l2 && r2){
+    if (l2 && r2) {
         yAxis = 0;
-    }else{
-        
+    } else {
     }
 
-
-    return std::pair<int, int>(, 0);
+    return std::pair<int, int>(0, 0);
 }
