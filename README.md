@@ -67,7 +67,6 @@ This is the default mode where the left side of the controller controls the left
 
 TODO: Have a way to "reduce" the throttle of the analog triggers by tilting the sticks in the opposite direction
 ### **Racecar** (Player 2/green)
-"Racecar" controls are coming soon TM
 - R2: Forward
 - L2: Backwards
 - Right stick
@@ -75,7 +74,7 @@ TODO: Have a way to "reduce" the throttle of the analog triggers by tilting the 
   - Right goes right
 
 ### **Single Stick** (Player 3/blue)
-"SingleStick" controls are coming soon TM
+It's a little too aggressive for turns, but it should be fine.
 - Right Stick
   - Left goes left
   - Right goes right
