@@ -11,7 +11,7 @@ class SingleStick : public ControlScheme {
         playerLEDs = 3;
         color = std::tuple<int, int, int>(0, 0, 255);
     };
-    std::pair<int, int> handleThrottle(void);
+    std::pair<double, double> handleThrottle(void);
 };
 
 #endif
