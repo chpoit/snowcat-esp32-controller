@@ -33,6 +33,8 @@
 // #define ESC_LOW_POINT (ESC_CENTER_POINT - 100)
 // #define ESC_HIGH_POINT (ESC_CENTER_POINT + 100)
 
+#define BATMON_PIN 21
+
 ESC LEFT_ESC = ESC(LEFTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT, ESC_CENTER_OFFSET);
 ESC RIGHT_ESC = ESC(RIGHTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT, ESC_CENTER_OFFSET);
 
@@ -130,6 +132,7 @@ void setup() {
     BP32.setup(&onConnectedGamepad, &onDisconnectedGamepad);
     pinMode(LEFTESC_WHITE_PIN, OUTPUT);
     pinMode(RIGHTESC_WHITE_PIN, OUTPUT);
+    pinMode(BATMON_PIN, INPUT);
     delay(250);
 }
 
@@ -168,5 +171,10 @@ void loop() {
             }
         }
     }
+    auto digital = digitalRead(BATMON_PIN);
+    auto analog = analogRead(BATMON_PIN);
+
+    Serial.println("Digital: " + String(digital) + "\tAnalog: " + String(analog));
+
     delay(150);
 }
