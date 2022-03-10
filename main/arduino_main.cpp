@@ -62,8 +62,8 @@ void handleThrottle(void* params) {
         }
         if (myGamepad && controlScheme && myGamepad->isConnected()) {
             auto axis = controlScheme->handleThrottle();
-            int leftSpeed = axis.first;
-            int rightSpeed = axis.second;
+            double leftSpeed = axis.first;
+            double rightSpeed = axis.second;
 
             double leftPWM = LEFT_ESC.getScaler()->scaleAxis(leftSpeed);
             double rightPWM = RIGHT_ESC.getScaler()->scaleAxis(rightSpeed);
@@ -149,6 +149,7 @@ void loop() {
             }
             if (myGamepad->miscBack()) {
                 controlScheme = schemeList.getNext();
+                controlScheme->calibrate(calibrationData);
                 controlScheme->setLEDs();
             }
         } else {

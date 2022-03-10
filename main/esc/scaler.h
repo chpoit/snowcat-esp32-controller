@@ -5,7 +5,7 @@
 class Scaler {
    public:
     Scaler(int escLowPoint, int escCenterPoint, int escHighPoint);
-    double scaleAxis(int axisValue);
+    double scaleAxis(double axisValue);
 
    private:
     int escLowPoint;

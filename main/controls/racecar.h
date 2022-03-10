@@ -11,7 +11,7 @@ class Racecar : public ControlScheme {
         playerLEDs = 2;
         color = std::tuple<int, int, int>(0, 255, 0);
     };
-    std::pair<int, int> handleThrottle(void);
+    std::pair<double, double> handleThrottle(void);
 };
 
 #endif

@@ -2,7 +2,7 @@
 #include "tank.h"
 #include "../utils.h"
 
-std::pair<int, int> Tank::handleThrottle() {
+std::pair<double, double> Tank::handleThrottle() {
     int model = gamepad->getModel();
 
     int leftSpeed = gamepad->axisY();
@@ -22,7 +22,7 @@ std::pair<int, int> Tank::handleThrottle() {
     leftSpeed = scaleY(leftSpeed);
     rightSpeed = scaleRY(rightSpeed);
 
-    return std::pair<int, int>(leftSpeed, rightSpeed);
+    return std::pair<double, double>(leftSpeed, rightSpeed);
 }
 
 int Tank::getAxisValue(int axis, bool forward, bool backward, int throttleValue, int model) {

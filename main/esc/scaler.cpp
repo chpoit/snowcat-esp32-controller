@@ -8,7 +8,7 @@ Scaler::Scaler(int escLowPoint, int escCenterPoint, int escHighPoint) {
     this->highRange = escHighPoint - escCenterPoint;
 }
 
-double Scaler::scaleAxis(int axisValue) {
+double Scaler::scaleAxis(double axisValue) {
     if (axisValue < 0) {
         auto scalar = axisValue / this->axisMin;
         return this->escCenterPoint - (scalar * lowRange);

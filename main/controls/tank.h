@@ -11,7 +11,7 @@ class Tank : public ControlScheme {
         playerLEDs = 1;
         color = std::tuple<int, int, int>(255, 0, 0);
     };
-    std::pair<int, int> handleThrottle(void);
+    std::pair<double, double> handleThrottle(void);
 
    private:
     int getAxisValue(int axis, bool forward, bool backward, int throttleValue, int model);
