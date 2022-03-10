@@ -33,7 +33,7 @@
 // #define ESC_LOW_POINT (ESC_CENTER_POINT - 100)
 // #define ESC_HIGH_POINT (ESC_CENTER_POINT + 100)
 
-#define BATMON_PIN 21
+#define BATMON_PIN 15
 
 ESC LEFT_ESC = ESC(LEFTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT, ESC_CENTER_OFFSET);
 ESC RIGHT_ESC = ESC(RIGHTESC_WHITE_PIN, ESC_LOW_POINT, ESC_HIGH_POINT, ESC_CENTER_POINT, ESC_CENTER_OFFSET);
@@ -136,6 +136,18 @@ void setup() {
     delay(250);
 }
 
+double analogToVolts(int16_t analogSignal, double v25 = 3500.) {
+    double v = 3.28;
+    double max = 4095; //29.08v
+    double inputVolts = analogSignal / max * v;
+    return inputVolts;
+    // return analogSignal / v25 * 25.2;
+}
+
+int loopCount = 0;
+double totalVolts = 0;
+double totalAnalog = 0;
+
 void loop() {
     BP32.update();
     if (myGamepad && myGamepad->isConnected()) {
@@ -172,10 +184,18 @@ void loop() {
             }
         }
     }
-    auto digital = digitalRead(BATMON_PIN);
     auto analog = analogRead(BATMON_PIN);
+    auto volts = analogToVolts(analog);
 
-    Serial.println("Digital: " + String(digital) + "\tAnalog: " + String(analog));
+    if (loopCount == 10) {
+        totalVolts = totalVolts / 10;
+        totalAnalog = totalAnalog / 10;
+        Serial.println("\tAnalog: " + String(totalAnalog) + "\tVolts: " + String(totalVolts));
+        totalVolts = loopCount = totalAnalog = 0;
+    }
 
+    totalVolts += volts;
+    totalAnalog += analog;
+    loopCount += 1;
     delay(150);
 }
